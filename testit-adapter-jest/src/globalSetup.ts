@@ -6,11 +6,36 @@ export default async (
   globalConfig: Config.GlobalConfig,
   projectConfig: Config.ProjectConfig
 ) => {
-  globalThis.testClient = new TestClient(projectConfig.testEnvironmentOptions);
+  const adapterMode = projectConfig.testEnvironmentOptions?.adapterMode ?? 0;
+
+  let testRunId: string;
   try {
-    const testRunId = await globalThis.testClient.createAndStartTestRun();
-    projectConfig.globals['testRunId'] = testRunId;
+    switch (adapterMode) {
+      case 0:
+      case 1: {
+        testRunId = projectConfig.testEnvironmentOptions?.testRunId as string;
+        if (!testRunId) {
+          throw new Error('testRunId is required when mode is 1');
+        }
+        globalThis.testClient = new TestClient(
+          projectConfig.testEnvironmentOptions
+        );
+        globalThis.testClient.startTestRun();
+        break;
+      }
+      case 2: {
+        globalThis.testClient = new TestClient(
+          projectConfig.testEnvironmentOptions
+        );
+        testRunId = await globalThis.testClient.createAndStartTestRun();
+        break;
+      }
+      default:
+        throw new Error(`Unknown adapter mode ${adapterMode}`);
+    }
   } catch (err) {
-    console.error('Failed to create and start test run', formatError(err));
+    console.error('Failed to setup', formatError(err));
+    process.exit(1);
   }
+  projectConfig.globals['testRunId'] = testRunId;
 };

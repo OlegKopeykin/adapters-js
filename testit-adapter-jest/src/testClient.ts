@@ -50,7 +50,12 @@ export class TestClient {
     }
     log('Starting test run %s', this.testRunId);
     await this.client.startTestRun(this.testRunId);
-    return this._testRunId;
+    return this.testRunId;
+  }
+
+  async startTestRun() {
+    log('Starting test run %s', this.testRunId);
+    await this.client.startTestRun(this.testRunId);
   }
 
   async completeTestRun() {
